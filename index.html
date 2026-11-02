@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Ticks or Split?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one presentation "slide" — headline + giant seat count left, debating-chamber hemicycle right, slider spanning beneath, then a sweep chart and the workings. */
+:root {
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --ink: #141a24;
+  --muted: #5b6575;
+  --rule: #d9dee6;
+  --accent: #1b4fa0;         /* control + highlight colour, sits near National blue */
+  --good: #12804a;
+  --warn: #b5530f;
+  --nat: #00529f; --act: #e6c200; --nzf: #2a2a2a; --lab: #d82a20;
+  --grn: #098137; --tpm: #8c1d2b; --top: #2bb5a3; --empty: #c9ced6;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e131b; --panel: #161d28; --ink: #e8ecf2; --muted: #98a3b5; --rule: #2a3442;
+  --accent: #6fa3ff; --good: #4cc98a; --warn: #f0a050;
+  --nat: #3d8bff; --act: #f2d43a; --nzf: #b8bec8; --lab: #ff5a4d; --grn: #2fbf62; --tpm: #d0505f; --top: #3fd6c2; --empty: #3a4454;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e131b; --panel: #161d28; --ink: #e8ecf2; --muted: #98a3b5; --rule: #2a3442;
+  --accent: #6fa3ff; --good: #4cc98a; --warn: #f0a050;
+  --nat: #3d8bff; --act: #f2d43a; --nzf: #b8bec8; --lab: #ff5a4d; --grn: #2fbf62; --tpm: #d0505f; --top: #3fd6c2; --empty: #3a4454;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 24px; }
+
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4.4vw, 48px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 20px; margin: 0 0 4px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 62ch; margin: 0; }
+
+.slide { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: clamp(16px, 3vw, 32px);
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(16px, 3vw, 36px); align-items: center; }
+@media (max-width: 760px) { .slide { grid-template-columns: 1fr; } }
+
+.count { display: grid; gap: 14px; min-width: 0; }
+.big { font-family: var(--f-display); font-weight: 800; font-size: clamp(72px, 11vw, 132px); line-height: .9; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.big small { font-size: .32em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 5px 12px; border-radius: 999px; width: fit-content; font-size: 15px;
+  border: 1px solid currentColor; }
+.status.yes { color: var(--good); }
+.status.no { color: var(--warn); }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.delta { font-family: var(--f-mono); font-size: 14px; color: var(--muted); }
+.delta b { color: var(--ink); }
+
+.chamber { min-width: 0; }
+.chamber svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend b { color: var(--ink); font-weight: 600; }
+
+.control { grid-column: 1 / -1; border-top: 1px solid var(--rule); padding-top: 18px; display: grid; gap: 10px; }
+.control-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.control label { font-weight: 600; font-size: 17px; }
+.pct { font-family: var(--f-display); font-weight: 800; font-size: 34px; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1; }
+input[type=range] { width: 100%; accent-color: var(--accent); height: 28px; cursor: pointer; }
+input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 11px; color: var(--muted); padding: 0 2px; }
+.flow { font-size: 15px; color: var(--muted); }
+.flow b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.row { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px; }
+@media (max-width: 860px) { .row { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+.sweep svg { width: 100%; height: auto; display: block; }
+
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+td .sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 0; }
+tr.total td { font-weight: 600; border-bottom: none; }
+td.up { color: var(--good); } td.down { color: var(--warn); }
+
+.settings { display: grid; gap: 14px; }
+.setting { display: grid; gap: 4px; }
+.setting .control-head label { font-size: 15px; }
+.setting output { font-family: var(--f-mono); font-size: 14px; font-weight: 600; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.notes { display: grid; gap: 10px; color: var(--muted); font-size: 14px; max-width: 80ch; }
+.notes h2 { color: var(--ink); }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.notes a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .seat { transition: fill .25s ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">NZ election · 7 November 2026 · party-vote model</div>
+    <h1>What happens if National voters give their party vote to ACT or NZ First?</h1>
+    <p class="lede">Every National voter keeps their electorate tick for National. Move the slider to send a share of National's <em>party</em> votes to its coalition partners and watch the right bloc's seat count.</p>
+  </header>
+
+  <section class="slide" aria-label="Right bloc seats">
+    <div class="count">
+      <div class="eyebrow">National + ACT + NZ First</div>
+      <div class="big" id="big">0<small> seats</small></div>
+      <div class="delta" id="need"></div>
+      <div class="status" id="status"></div>
+      <div class="delta" id="delta"></div>
+    </div>
+    <div class="chamber">
+      <svg id="chamber" viewBox="0 0 400 215" role="img" aria-label="Parliament seat diagram"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="control">
+      <div class="control-head">
+        <label for="shift">National voters who split their vote</label>
+        <span class="pct" id="pctOut">0%</span>
+      </div>
+      <input type="range" id="shift" min="0" max="100" step="5" value="0" aria-describedby="flow">
+      <div class="ticks" aria-hidden="true"><span>0%</span><span>20%</span><span>40%</span><span>60%</span><span>80%</span><span>100%</span></div>
+      <div class="flow" id="flow"></div>
+    </div>
+  </section>
+
+  <div class="row">
+    <section class="card sweep">
+      <h2>Right bloc seats at every level of splitting</h2>
+      <p>Blue line: right bloc seats. Dashed line: seats needed for a majority, which rises as overhang seats enlarge Parliament.</p>
+      <svg id="sweep" viewBox="0 0 560 280" role="img" aria-label="Right bloc seats against share of National voters splitting"></svg>
+    </section>
+
+    <section class="card">
+      <h2>Seat count</h2>
+      <div class="tbl-wrap"><table id="tbl"></table></div>
+      <p id="listNote"></p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Assumptions you can change</h2>
+    <div class="settings">
+      <div class="setting">
+        <div class="control-head"><label for="natElec">Electorates National wins</label><output id="natElecOut" for="natElec">36</output></div>
+        <input type="range" id="natElec" min="26" max="46" step="1" value="36">
+        <span class="hint">The biggest unknown. National won 43 in 2023 and holds 44 now. Labour takes whatever National gives up.</span>
+      </div>
+      <div class="setting">
+        <div class="control-head"><label for="split">Where switched votes go</label><output id="splitOut" for="split">50% ACT · 50% NZ First</output></div>
+        <input type="range" id="split" min="0" max="100" step="10" value="50">
+        <span class="hint">Left = all to NZ First, right = all to ACT. Both parties are already above 5%, so this barely changes the bloc total.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <h2>Why it works, and its limits</h2>
+    <ul>
+      <li><b>Under MMP, moving party votes between friendly parties normally changes nothing.</b> Seats follow party vote, so a vote moved from National to ACT just moves a seat from National to ACT.</li>
+      <li><b>The exception is overhang.</b> If National wins more electorates than its party vote entitles it to, it keeps them all. From that point, every party vote moved to ACT or NZ First earns them seats while National loses none. Parliament grows past 120.</li>
+      <li><b>The majority bar rises too.</b> Each extra seat enlarges Parliament, so the majority needed goes up by roughly one for every two overhang seats.</li>
+      <li><b>National's list disappears.</b> Once National is fully in overhang, it has no list MPs. List-only MPs such as Nicola Willis and Paul Goldsmith would not return.</li>
+      <li><b>The left has overhang too.</b> Te Pāti Māori is polling about 1% but is expected to win several Māori electorates, which already adds overhang seats on the left.</li>
+      <li>Seats use the Sainte-Laguë method over 120 seats. Parties need 5% or an electorate. Party votes are the <a href="https://nzpolls.co.nz/polls/" target="_blank" rel="noopener">nzpolls.co.nz weighted average</a> of 14 polls since 1 September 2026. Electorate wins are illustrative assumptions: ACT 2, Greens 3, Te Pāti Māori 4, Labour the rest. This is a model, not a forecast.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(() => {
+  // Poll average (nzpolls.co.nz, 14 polls since 1 Sep 2026)
+  const BASE = { nat: 27.8, lab: 28.6, grn: 14.8, act: 10.1, nzf: 10.2, top: 6.3, tpm: 1.3, oth: 0.9 };
+  const NAMES = { tpm: "Te Pāti Māori", grn: "Green", lab: "Labour", top: "Opportunity", nzf: "NZ First", act: "ACT", nat: "National" };
+  const ORDER = ["tpm", "grn", "lab", "top", "nzf", "act", "nat"]; // chamber left → right
+  const RIGHT = ["nat", "act", "nzf"];
+  const TOTAL_ELEC = 71;
+  const FIXED_ELEC = { act: 2, grn: 3, tpm: 4, nzf: 0, top: 0 };
+
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function electorates(natElec) {
+    const e = { ...FIXED_ELEC, nat: natElec };
+    e.lab = TOTAL_ELEC - natElec - e.act - e.grn - e.tpm;
+    return e;
+  }
+
+  function votes(shiftPct, actShare) {
+    const v = { ...BASE };
+    const moved = BASE.nat * shiftPct / 100;
+    v.nat -= moved;
+    v.act += moved * actShare;
+    v.nzf += moved * (1 - actShare);
+    return v;
+  }
+
+  // Sainte-Laguë over 120 seats; parties qualify on 5% or one electorate. Overhang kept.
+  function allocate(v, e) {
+    const parties = ORDER.filter(p => v[p] >= 5 || (e[p] || 0) > 0);
+    const alloc = Object.fromEntries(parties.map(p => [p, 0]));
+    for (let s = 0; s < 120; s++) {
+      let best = null, bq = -1;
+      for (const p of parties) {
+        const q = v[p] / (2 * alloc[p] + 1);
+        if (q > bq) { bq = q; best = p; }
+      }
+      alloc[best]++;
+    }
+    const seats = {}, list = {};
+    let total = 0;
+    for (const p of ORDER) {
+      const a = alloc[p] || 0, el = e[p] || 0;
+      seats[p] = Math.max(a, el);
+      list[p] = Math.max(0, a - el);
+      total += seats[p];
+    }
+    const right = RIGHT.reduce((s, p) => s + seats[p], 0);
+    const majority = Math.floor(total / 2) + 1;
+    return { seats, list, alloc, total, right, majority, votes: v, elec: e };
+  }
+
+  const model = (shift, natElec, actShare) => allocate(votes(shift, actShare), electorates(natElec));
+
+  // Hemicycle geometry, rebuilt when total changes
+  function hemicycle(n) {
+    const rows = 8, rIn = 0.42, rOut = 1;
+    const radii = Array.from({ length: rows }, (_, i) => rIn + (rOut - rIn) * i / (rows - 1));
+    const sumR = radii.reduce((a, b) => a + b, 0);
+    let counts = radii.map(r => Math.round(n * r / sumR));
+    let diff = n - counts.reduce((a, b) => a + b, 0), k = rows - 1;
+    while (diff !== 0) { counts[k] += Math.sign(diff); diff -= Math.sign(diff); k = (k - 1 + rows) % rows; }
+    const pts = [];
+    radii.forEach((r, i) => {
+      const c = counts[i];
+      for (let j = 0; j < c; j++) {
+        const a = Math.PI * (1 - (c === 1 ? 0.5 : j / (c - 1)));
+        pts.push({ a, x: Math.cos(a) * r, y: Math.sin(a) * r });
+      }
+    });
+    pts.sort((p, q) => q.a - p.a || p.x - q.x);
+    return pts;
+  }
+
+  function drawChamber(r) {
+    const svg = $("chamber");
+    const pts = hemicycle(r.total);
+    const cx = 200, cy = 200, R = 188, dot = 6.4;
+    const colors = [];
+    for (const p of ORDER) for (let i = 0; i < r.seats[p]; i++) colors.push(p);
+    let h = "";
+    pts.forEach((pt, i) => {
+      h += `<circle class="seat" cx="${(cx + pt.x * R).toFixed(1)}" cy="${(cy - pt.y * R).toFixed(1)}" r="${dot}" style="fill:var(--${colors[i] || "empty"})"></circle>`;
+    });
+    h += `<line x1="200" y1="4" x2="200" y2="208" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".55"></line>`;
+    h += `<text x="200" y="213" text-anchor="middle" font-family="var(--f-mono)" font-size="9" fill="var(--muted)">MAJORITY ${r.majority} OF ${r.total}</text>`;
+    svg.innerHTML = h;
+    $("legend").innerHTML = ORDER.filter(p => r.seats[p] > 0)
+      .map(p => `<span><i style="background:var(--${p})"></i>${NAMES[p]} <b>${r.seats[p]}</b></span>`).join("");
+  }
+
+  function drawSweep(natElec, actShare, shift) {
+    const svg = $("sweep");
+    const W = 560, H = 280, L = 44, Rm = 16, T = 16, B = 40;
+    const xs = Array.from({ length: 21 }, (_, i) => i * 5);
+    const data = xs.map(x => ({ x, ...model(x, natElec, actShare) }));
+    let lo = Math.min(...data.map(d => Math.min(d.right, d.majority))) - 3;
+    let hi = Math.max(...data.map(d => Math.max(d.right, d.majority))) + 3;
+    lo = Math.floor(lo / 5) * 5; hi = Math.ceil(hi / 5) * 5;
+    const X = x => L + (W - L - Rm) * x / 100;
+    const Y = y => T + (H - T - B) * (1 - (y - lo) / (hi - lo));
+    let h = "";
+    for (let y = lo; y <= hi; y += 5) {
+      h += `<line x1="${L}" x2="${W - Rm}" y1="${Y(y)}" y2="${Y(y)}" stroke="var(--rule)" stroke-width="1"></line>`;
+      h += `<text x="${L - 8}" y="${Y(y) + 4}" text-anchor="end" font-size="11" font-family="var(--f-mono)" fill="var(--muted)">${y}</text>`;
+    }
+    for (let x = 0; x <= 100; x += 20) {
+      h += `<text x="${X(x)}" y="${H - B + 18}" text-anchor="middle" font-size="11" font-family="var(--f-mono)" fill="var(--muted)">${x}%</text>`;
+    }
+    h += `<text x="${(L + W - Rm) / 2}" y="${H - 4}" text-anchor="middle" font-size="11" fill="var(--muted)">Share of National voters giving their party vote to ACT / NZ First</text>`;
+    const step = key => data.map((d, i) => (i ? `H${X(d.x)}V${Y(d[key])}` : `M${X(d.x)} ${Y(d[key])}`)).join("");
+    const line = key => data.map((d, i) => `${i ? "L" : "M"}${X(d.x)} ${Y(d[key])}`).join("");
+    h += `<path d="${step("majority")}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4" opacity=".7"></path>`;
+    h += `<path d="${line("right")}" fill="none" stroke="var(--nat)" stroke-width="3" stroke-linejoin="round"></path>`;
+    const cur = data.find(d => d.x === shift);
+    h += `<line x1="${X(shift)}" x2="${X(shift)}" y1="${T}" y2="${H - B}" stroke="var(--accent)" stroke-width="1" opacity=".5"></line>`;
+    h += `<circle cx="${X(shift)}" cy="${Y(cur.right)}" r="6" style="fill:var(--nat)" stroke="var(--panel)" stroke-width="2"></circle>`;
+    const lx = shift > 70 ? X(shift) - 10 : X(shift) + 10, anchor = shift > 70 ? "end" : "start";
+    h += `<text x="${lx}" y="${Y(cur.right) - 10}" text-anchor="${anchor}" font-size="13" font-weight="600" fill="var(--ink)">${cur.right} seats</text>`;
+    h += `<text x="${X(100) - 2}" y="${Y(data[20].majority) + 16}" text-anchor="end" font-size="11" fill="var(--muted)">needed: ${data[20].majority}</text>`;
+    svg.innerHTML = h;
+  }
+
+  function render() {
+    const shift = +$("shift").value, natElec = +$("natElec").value, actPct = +$("split").value, actShare = actPct / 100;
+    const r = model(shift, natElec, actShare);
+    const base = model(0, natElec, actShare);
+
+    $("pctOut").textContent = shift + "%";
+    $("natElecOut").textContent = natElec;
+    $("splitOut").textContent = `${actPct}% ACT · ${100 - actPct}% NZ First`;
+
+    $("big").innerHTML = `${r.right}<small> of ${r.total} seats</small>`;
+    $("need").innerHTML = `Majority needs <b>${r.majority}</b>`;
+    const st = $("status");
+    const gap = r.right - r.majority;
+    st.className = "status " + (gap >= 0 ? "yes" : "no");
+    st.textContent = gap >= 0 ? `Majority, with ${gap} to spare` : `${-gap} short of a majority`;
+    const d = r.right - base.right;
+    $("delta").innerHTML = shift === 0
+      ? "Starting point: every National voter ticks National twice."
+      : `<b>${d >= 0 ? "+" : ""}${d}</b> seats for the bloc vs. two ticks for National`;
+
+    const moved = BASE.nat * shift / 100;
+    $("flow").innerHTML = shift === 0
+      ? `National party vote <b>${BASE.nat.toFixed(1)}%</b>. Nobody has split yet.`
+      : `<b>${moved.toFixed(1)}</b> points of party vote move. National <b>${r.votes.nat.toFixed(1)}%</b>, ACT <b>${r.votes.act.toFixed(1)}%</b>, NZ First <b>${r.votes.nzf.toFixed(1)}%</b>.`;
+
+    drawChamber(r);
+    drawSweep(natElec, actShare, shift);
+
+    const rows = ["nat", "act", "nzf", "lab", "grn", "tpm", "top"];
+    let t = `<thead><tr><th>Party</th><th>Vote</th><th>Elec.</th><th>List</th><th>Seats</th><th>Change</th></tr></thead><tbody>`;
+    for (const p of rows) {
+      const ch = r.seats[p] - base.seats[p];
+      t += `<tr><td><span class="sw" style="background:var(--${p})"></span>${NAMES[p]}</td><td>${r.votes[p].toFixed(1)}%</td><td>${r.elec[p] || 0}</td><td>${r.list[p]}</td><td><b>${r.seats[p]}</b></td><td class="${ch > 0 ? "up" : ch < 0 ? "down" : ""}">${ch ? (ch > 0 ? "+" : "") + ch : "–"}</td></tr>`;
+    }
+    const over = r.total - 120;
+    t += `<tr class="total"><td>Parliament</td><td></td><td>${TOTAL_ELEC}</td><td></td><td>${r.total}</td><td>${r.total - base.total ? "+" + (r.total - base.total) : "–"}</td></tr></tbody>`;
+    $("tbl").innerHTML = t;
+
+    const natOver = r.elec.nat - r.alloc.nat;
+    $("listNote").textContent = natOver > 0
+      ? `National's party vote earns ${r.alloc.nat} seats but it wins ${r.elec.nat} electorates, so it keeps ${natOver} overhang seat${natOver === 1 ? "" : "s"} and has no list MPs. Parliament has ${over} overhang seat${over === 1 ? "" : "s"} in total.`
+      : `National's party vote earns ${r.alloc.nat} seats: ${r.elec.nat} electorate MPs plus ${r.list.nat} from the list. ` + (over > 0 ? `Parliament has ${over} overhang seat${over === 1 ? "" : "s"}, all from other parties.` : "No overhang.");
+  }
+
+  ["shift", "natElec", "split"].forEach(id => $(id).addEventListener("input", render));
+  render();
+})();
+</script>
